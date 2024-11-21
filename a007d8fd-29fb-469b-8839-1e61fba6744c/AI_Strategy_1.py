@@ -1,7 +1,6 @@
 from surmount.technical_indicators import MACD, RSI
 from surmount.base_class import Strategy, TargetAllocation
 
-
 class IntradayTradingStrategy(Strategy):
     @property
     def assets(self):
@@ -32,13 +31,14 @@ class IntradayTradingStrategy(Strategy):
 
                     # Calculate MACD
                     macd_values = MACD(ticker, ohlcv, fast=12, slow=26, signal=9)
-                    macd_line, signal_line = macd_values if len(macd_values) == 2 else (None, None)
 
-                    if macd_line is not None and signal_line is not None:
+                    # Ensure MACD returns valid structure
+                    if isinstance(macd_values, tuple) and len(macd_values) == 2:
+                        macd_line, signal_line = macd_values
                         rsi_signals[ticker].append(rsi_value)
                         macd_signals[ticker].append(macd_line[-1] > signal_line[-1])  # True if MACD > Signal
                     else:
-                        raise ValueError("Missing MACD values")
+                        raise ValueError("Invalid MACD return structure")
 
                 except Exception as e:
                     # Log error for debugging and set fallback values
