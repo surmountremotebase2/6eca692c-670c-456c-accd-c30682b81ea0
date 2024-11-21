@@ -52,14 +52,14 @@ class IntradayTradingStrategy(Strategy):
 
         # Rebalance only if deviation exceeds 2%
         for key in allocation_dict:
-    current_allocation = holdings.get(key, 0)
-    target_allocation = allocation_dict[key]
-    if abs(target_allocation - current_allocation) > 0.02:
-        if target_allocation > current_allocation:
-            print(f"BUY {key}: Increase allocation from {current_allocation:.2%} to {target_allocation:.2%}")
-        else:
-            print(f"SELL {key}: Decrease allocation from {current_allocation:.2%} to {target_allocation:.2%}")
-        return TargetAllocation(allocation_dict)
+            current_allocation = holdings.get(key, 0)
+            target_allocation = allocation_dict[key]
+            if abs(target_allocation - current_allocation) > 0.02:
+                if target_allocation > current_allocation:
+                    print(f"BUY {key}: Increase allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                else:
+                    print(f"SELL {key}: Decrease allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                return TargetAllocation(allocation_dict)
 
 
         return None
