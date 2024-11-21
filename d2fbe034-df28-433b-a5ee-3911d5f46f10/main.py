@@ -61,6 +61,7 @@ class IntradayTradingStrategy(Strategy):
             print(f"SELL {key}: Decrease allocation from {current_allocation:.2%} to {target_allocation:.2%}")
         return TargetAllocation(allocation_dict)
 
+
         return None
 
     def get_ohlcv(self, ticker, interval):
