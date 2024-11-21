@@ -4,7 +4,7 @@ from surmount.technical_indicators import RSI, MACD
 from surmount.logging import log
 
 class TradingStrategy(Strategy):
-     @property
+    @property
     def assets(self):
         return ["SPY", "QQQ", "VTI", "VXUS"]
 
