@@ -1,19 +1,16 @@
+
 from surmount.base_class import Strategy, TargetAllocation
 from surmount.technical_indicators import RSI, MACD
 from surmount.logging import log
 
 class TradingStrategy(Strategy):
-    def __init__(self):
-        self.assets = ["SPY", "QQQ", "VTI", "VXUS"]
-        self.interval = "5min"  # Using a fixed interval; for others, separate strategies or adaptations are needed
-
-    @property
+     @property
     def assets(self):
-        return self.assets
+        return ["SPY", "QQQ", "VTI", "VXUS"]
 
     @property
     def interval(self):
-        return self.interval
+        return "5min"  # Primary interval; we will handle others manually
 
     def run(self, data):
         total_rsi = {ticker: 0 for ticker in self.assets}
