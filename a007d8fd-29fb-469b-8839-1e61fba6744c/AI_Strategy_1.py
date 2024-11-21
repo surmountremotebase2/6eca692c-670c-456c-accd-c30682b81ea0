@@ -1,44 +1,70 @@
+from surmount.technical_indicators import MACD, RSI
 from surmount.base_class import Strategy, TargetAllocation
-from surmount.technical_indicators import RSI, MACD
-from surmount.logging import log
 
-class TradingStrategy(Strategy):
-    def __init__(self):
-        self.tickers = ["SPY", "QQQ", "VTI", "VXUS"]  # List of assets we're interested in
+class IntradayTradingStrategy(Strategy):
+    @property
+    def assets(self):
+        return ["SPY", "QQQ", "VTI", "VXUS"]
 
     @property
     def interval(self):
-        return "1day"  # Set the interval to daily
-
-    @property
-    def assets(self):
-        return self.tickers  # Define which assets to track
+        return "5min"  # Primary interval; we will handle others manually
 
     def run(self, data):
-        allocation_dict = {}
-        
-        # Loop through each ticker to check MACD and RSI
-        for ticker in self.tickers:
-            try:
-                # Get MACD and RSI values for each ticker
-                macd_data = MACD(ticker, data["ohlcv"], fast=12, slow=26)
-                rsi_data = RSI(ticker, data["ohlcv"], length=14)
-                
-                # Check if MACD line crosses above the signal line and RSI is below 70
-                if macd_data["MACD"][-1] > macd_data["signal"][-1] and rsi_data[-1] < 70:
-                    allocation_dict[ticker] = 0.25  # allocating 25% to this asset
-                else:
-                    allocation_dict[ticker] = 0.0  # not allocating to this asset
-            except Exception as e:
-                log(f"An error occurred while processing {ticker}: {str(e)}")
-                allocation_dict[ticker] = 0.0  # Default to no allocation in case of error
-        
-        # Implementing a simple risk management by checking if the
-        # sum of allocations does not exceed 1 (100% of the portfolio)
-        total_allocation = sum(allocation_dict.values())
-        if total_allocation > 1:
-            # Normalize allocations if the total exceeds 100%
-            allocation_dict = {ticker: weight / total_allocation for ticker, weight in allocation_dict.items()}
+        holdings = data["holdings"]
+        ohlcv_data = data["ohlcv"]
 
-        log(f"Allocations: {allocation_dict}")
-        return TargetAllocation(allocation_dict)
+        intervals = ["5min", "10min", "15min"]
+        allocation_dict = {}
+        rsi_signals = {ticker: [] for ticker in self.assets}
+        macd_signals = {ticker: [] for ticker in self.assets}
+
+        for ticker in self.assets:
+            for interval in intervals:
+                try:
+                    # Fetch interval-specific data
+                    ohlcv = self.get_ohlcv(ticker, interval)
+
+                    # Calculate RSI and MACD
+                    rsi = RSI(ticker, ohlcv, 14)[-1]
+                    macd, signal = MACD(ticker, ohlcv, fast=12, slow=26, signal=9)
+
+                    # Record signal states
+                    rsi_signals[ticker].append(rsi)
+                    macd_signals[ticker].append(macd[-1] > signal[-1])  # True if MACD > Signal
+                except:
+                    # Fallback for missing data
+                    rsi_signals[ticker].append(50)  # Neutral RSI
+                    macd_signals[ticker].append(False)  # No bullish confirmation
+
+        # Consolidate signals across intervals
+        for ticker in self.assets:
+            # Calculate average RSI across intervals
+            avg_rsi = sum(rsi_signals[ticker]) / len(rsi_signals[ticker])
+
+            # Check if MACD is bullish in at least two intervals
+            macd_bullish_count = sum(macd_signals[ticker])
+            macd_confirmed = macd_bullish_count >= 2
+
+            # Allocation logic
+            if macd_confirmed:
+                allocation_dict[ticker] = avg_rsi / sum(rsi_signals[t].mean() for t in self.assets)
+
+        # Rebalance only if deviation exceeds 2%
+        for key in allocation_dict:
+            current_allocation = holdings.get(key, 0)
+            target_allocation = allocation_dict[key]
+            if abs(target_allocation - current_allocation) > 0.02:
+                if target_allocation > current_allocation:
+                    print(f"BUY {key}: Increase allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                else:
+                    print(f"SELL {key}: Decrease allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                return TargetAllocation(allocation_dict)
+
+
+        return None
+
+    def get_ohlcv(self, ticker, interval):
+        """Fetch OHLCV data for a specific ticker and interval."""
+        # Example placeholder; replace with your data-fetching logic
+        return self.fetch_data(ticker, interval)
