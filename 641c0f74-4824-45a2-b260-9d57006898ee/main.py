@@ -1,7 +1,5 @@
-
+from surmount.technical_indicators import MACD, RSI
 from surmount.base_class import Strategy, TargetAllocation
-from surmount.technical_indicators import RSI, MACD
-from surmount.logging import log
 
 class TradingStrategy(Strategy):
     @property
@@ -13,39 +11,60 @@ class TradingStrategy(Strategy):
         return "5min"  # Primary interval; we will handle others manually
 
     def run(self, data):
-        total_rsi = {ticker: 0 for ticker in self.assets}
-        bullish_macd_count = {ticker: 0 for ticker in self.assets}
-        allocations = {}
+        holdings = data["holdings"]
+        ohlcv_data = data["ohlcv"]
+
+        intervals = ["5min", "10min", "15min"]
+        allocation_dict = {}
+        rsi_signals = {ticker: [] for ticker in self.assets}
+        macd_signals = {ticker: [] for ticker in self.assets}
 
         for ticker in self.assets:
-            ohlcv_data = data['ohlcv'][ticker]
-            rsi_value = RSI(ticker, ohlcv_data, 14)
-            macd_indicator = MACD(ticker, ohlcv_data, 12, 26)
-            macd_line = macd_indicator['MACD']
-            signal_line = macd_indicator['signal']
+            for interval in intervals:
+                try:
+                    # Fetch interval-specific data
+                    ohlcv = self.get_ohlcv(ticker, interval)
 
-            # Check latest MACD line vs Signal line for bullish signal
-            if macd_line[-1] > signal_line[-1]:
-                bullish_macd_count[ticker] += 1
+                    # Calculate RSI and MACD
+                    rsi = RSI(ticker, ohlcv, 14)[-1]
+                    macd, signal = MACD(ticker, ohlcv, fast=12, slow=26, signal=9)
 
-            # Accumulate RSI for average calculation
-            total_rsi[ticker] += rsi_value[-1]
+                    # Record signal states
+                    rsi_signals[ticker].append(rsi)
+                    macd_signals[ticker].append(macd[-1] > signal[-1])  # True if MACD > Signal
+                except:
+                    # Fallback for missing data
+                    rsi_signals[ticker].append(50)  # Neutral RSI
+                    macd_signals[ticker].append(False)  # No bullish confirmation
 
-        # Determine allocations based on RSI and bullish MACD signals
-        total_weight = 0
+        # Consolidate signals across intervals
         for ticker in self.assets:
-            avg_rsi = total_rsi[ticker]
-            if avg_rsi > 50 and bullish_macd_count[ticker] >= 2:
-                allocations[ticker] = avg_rsi
-                total_weight += avg_rsi
-            else:
-                allocations[ticker] = 0  # Or set a smaller allocation as per the strategy rules
+            # Calculate average RSI across intervals
+            avg_rsi = sum(rsi_signals[ticker]) / len(rsi_signals[ticker])
 
-        # Normalizing allocations to make the sum between 0 and 1
-        for ticker in allocations:
-            if total_weight > 0:
-                allocations[ticker] /= total_weight
-            else:
-                allocations[ticker] = 1 / len(self.assets)  # Even distribution if total_weight is 0
+            # Check if MACD is bullish in at least two intervals
+            macd_bullish_count = sum(macd_signals[ticker])
+            macd_confirmed = macd_bullish_count >= 2
 
-        return TargetAllocation(allocations)
+            # Allocation logic
+            if macd_confirmed:
+                allocation_dict[ticker] = avg_rsi / sum(rsi_signals[t].mean() for t in self.assets)
+
+        # Rebalance only if deviation exceeds 2%
+        for key in allocation_dict:
+            current_allocation = holdings.get(key, 0)
+            target_allocation = allocation_dict[key]
+            if abs(target_allocation - current_allocation) > 0.02:
+                if target_allocation > current_allocation:
+                    print(f"BUY {key}: Increase allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                else:
+                    print(f"SELL {key}: Decrease allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                return TargetAllocation(allocation_dict)
+
+
+        return None
+
+    def get_ohlcv(self, ticker, interval):
+        """Fetch OHLCV data for a specific ticker and interval."""
+        # Example placeholder; replace with your data-fetching logic
+        return self.fetch_data(ticker, interval)
