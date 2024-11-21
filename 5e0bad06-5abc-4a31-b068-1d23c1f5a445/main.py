@@ -1,3 +1,6 @@
+from surmount.technical_indicators import MACD, RSI
+from surmount.base_class import Strategy, TargetAllocation
+
 class IntradayTradingStrategy(Strategy):
     @property
     def assets(self):
