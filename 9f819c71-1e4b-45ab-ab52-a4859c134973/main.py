@@ -1,6 +1,7 @@
 from surmount.base_class import Strategy, TargetAllocation
 from surmount.technical_indicators import MACD, RSI
 from surmount.logging import log
+import json
 
 class TradingStrategy(Strategy):
     # Define the assets this strategy will trade
@@ -27,6 +28,9 @@ class TradingStrategy(Strategy):
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
         rsi_value = RSI("SPY", data, 14)[-1]
+
+        d = json.dumps(macd_result)
+
 
         if macd_result:
             # Extract the Signal line (MACDs) from the returned dictionary
