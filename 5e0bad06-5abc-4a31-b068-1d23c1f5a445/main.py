@@ -1,14 +1,14 @@
 from surmount.technical_indicators import MACD, RSI
 from surmount.base_class import Strategy, TargetAllocation
 
-class TradingStrategy(Strategy):
+class IntradayTradingStrategy(Strategy):
     @property
     def assets(self):
         return ["SPY", "QQQ", "VTI", "VXUS"]
 
     @property
     def interval(self):
-        return "5min"  # Primary interval; we will handle others manually
+        return "5min"
 
     def run(self, data):
         holdings = data["holdings"]
@@ -25,21 +25,30 @@ class TradingStrategy(Strategy):
                     # Fetch interval-specific data
                     ohlcv = self.get_ohlcv(ticker, interval)
 
-                    # Calculate RSI and MACD
-                    rsi = RSI(ticker, ohlcv, 14)[-1]
-                    macd, signal = MACD(ticker, ohlcv, fast=12, slow=26, signal=9)
+                    # Calculate RSI
+                    rsi = RSI(ticker, ohlcv, 14)
+                    rsi_value = rsi[-1] if rsi else 50  # Fallback to neutral RSI if data missing
 
-                    # Record signal states
-                    rsi_signals[ticker].append(rsi)
-                    macd_signals[ticker].append(macd[-1] > signal[-1])  # True if MACD > Signal
-                except:
-                    # Fallback for missing data
+                    # Calculate MACD
+                    macd_values = MACD(ticker, ohlcv, fast=12, slow=26, signal=9)
+
+                    # Ensure MACD returns valid structure
+                    if isinstance(macd_values, tuple) and len(macd_values) == 2:
+                        macd_line, signal_line = macd_values
+                        rsi_signals[ticker].append(rsi_value)
+                        macd_signals[ticker].append(macd_line[-1] > signal_line[-1])  # True if MACD > Signal
+                    else:
+                        raise ValueError("Invalid MACD return structure")
+
+                except Exception as e:
+                    # Log error for debugging and set fallback values
+                    self.logger.warning(f"Error processing {ticker} at {interval}: {e}")
                     rsi_signals[ticker].append(50)  # Neutral RSI
                     macd_signals[ticker].append(False)  # No bullish confirmation
 
         # Consolidate signals across intervals
         for ticker in self.assets:
-            # Calculate average RSI across intervals
+            # Average RSI across intervals
             avg_rsi = sum(rsi_signals[ticker]) / len(rsi_signals[ticker])
 
             # Check if MACD is bullish in at least two intervals
@@ -48,7 +57,9 @@ class TradingStrategy(Strategy):
 
             # Allocation logic
             if macd_confirmed:
-                allocation_dict[ticker] = avg_rsi / sum(rsi_signals[t].mean() for t in self.assets)
+                allocation_dict[ticker] = avg_rsi / sum(
+                    sum(rsi_signals[t]) / len(rsi_signals[t]) for t in self.assets
+                )
 
         # Rebalance only if deviation exceeds 2%
         for key in allocation_dict:
@@ -56,15 +67,14 @@ class TradingStrategy(Strategy):
             target_allocation = allocation_dict[key]
             if abs(target_allocation - current_allocation) > 0.02:
                 if target_allocation > current_allocation:
-                    print(f"BUY {key}: Increase allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                    self.logger.info(f"BUY {key}: Increase allocation from {current_allocation:.2%} to {target_allocation:.2%}")
                 else:
-                    print(f"SELL {key}: Decrease allocation from {current_allocation:.2%} to {target_allocation:.2%}")
+                    self.logger.info(f"SELL {key}: Decrease allocation from {current_allocation:.2%} to {target_allocation:.2%}")
                 return TargetAllocation(allocation_dict)
-
 
         return None
 
     def get_ohlcv(self, ticker, interval):
         """Fetch OHLCV data for a specific ticker and interval."""
-        # Example placeholder; replace with your data-fetching logic
+        # Placeholder for data-fetching logic
         return self.fetch_data(ticker, interval)
