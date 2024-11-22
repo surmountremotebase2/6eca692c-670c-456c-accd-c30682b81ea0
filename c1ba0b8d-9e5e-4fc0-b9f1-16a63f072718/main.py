@@ -19,7 +19,7 @@ class TradingStrategy(Strategy):
 
       try:
          macd_data = MACD("SPY", data, fast=12, slow=26)  # Calculate MACD (12, 26)
-         macd_signal_value = macd_data["MACD"][-1]
+         macd_signal_value = macd_data["MACD"]
       except Exception as e:
          macd_signal_value = 0  # Default neutral MACD signal
 
