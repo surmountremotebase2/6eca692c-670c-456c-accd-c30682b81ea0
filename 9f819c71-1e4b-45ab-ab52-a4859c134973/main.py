@@ -47,7 +47,7 @@ class TradingStrategy(Strategy):
                 # Allocation logic based on MACDs value
                 if current_macds < -0.45 and rsi_value < 45:
                     allocation = 1.0  # Full allocation to SPY
-                    log("MACDs < -0.45 and RSI < 40: Allocating 100% to SPY.")
+                    log("MACDs < -0.45 and RSI < 45: Allocating 100% to SPY.")
                 elif current_macds > 0.6 or rsi_value > 60:
                     allocation = 0.2  # Partial allocation to SPY
                     log("MACDs > 0.6 or RSI > 60: Allocating 20% to SPY.")
