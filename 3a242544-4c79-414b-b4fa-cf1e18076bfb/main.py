@@ -27,26 +27,25 @@ class TradingStrategy(Strategy):
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
 
-        if macd_result is not None:
-            # Extract the MACD line, Signal line, and Histogram
-            macd_line = macd_result[-1]
-            signal_line = macd_result["signal"]
-            histogram = macd_result["histogram"]
+        if macd_result:
+            # Extract the MACD line, Signal line, and Histogram from the returned dictionary
+            macd_line = macd_result.get("MACD_12_26_9", [])
+            signal_line = macd_result.get("MACDs_12_26_9", [])
+            histogram = macd_result.get("MACDh_12_26_9", [])
 
-            # Ensure we have at least one period worth of data
-            if len(histogram) > 1:
-                # Trading signal based on MACD strategy:
-                # If the MACD line crosses above the signal line, we consider this a buy signal
-                # If the MACD line crosses below the signal line, we consider this a sell signal
+            # Ensure sufficient data is available for processing
+            if len(macd_line) > 1 and len(signal_line) > 1 and len(histogram) > 1:
+                # Debug the current indicator values
+                log.info(f"MACD Line: {macd_line[-1]}, Signal Line: {signal_line[-1]}, Histogram: {histogram[-1]}")
 
-                # Check for a buy signal
+                # Check for a bullish crossover (Buy signal)
                 if histogram[-2] < 0 and histogram[-1] > 0:
                     allocation = 1  # Full allocation to SPY
-                    log("MACD bullish crossover. Going long on SPY.")
-                # Check for a sell signal
+                    log.info("MACD bullish crossover. Going long on SPY.")
+                # Check for a bearish crossover (Sell signal)
                 elif histogram[-2] > 0 and histogram[-1] < 0:
                     allocation = 0  # Move to cash (No position)
-                    log("MACD bearish crossover. Exiting position in SPY.")
+                    log.info("MACD bearish crossover. Exiting position in SPY.")
 
         # Return the allocation advisory for SPY
         return TargetAllocation({"SPY": allocation})
