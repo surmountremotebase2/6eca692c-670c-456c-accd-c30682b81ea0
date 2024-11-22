@@ -30,8 +30,10 @@ class TradingStrategy(Strategy):
         rsi_value = RSI("SPY", data, 14)[-1]
 
         d = json.dumps(macd_result)
+        log(d)
 
-        log("rutttt")
+        r = json.dumps(rsi_value)
+        log(r)
 
 
         if macd_result:
