@@ -31,6 +31,8 @@ class TradingStrategy(Strategy):
 
         d = json.dumps(macd_result)
 
+        log("rutttt")
+
 
         if macd_result:
             # Extract the Signal line (MACDs) from the returned dictionary
