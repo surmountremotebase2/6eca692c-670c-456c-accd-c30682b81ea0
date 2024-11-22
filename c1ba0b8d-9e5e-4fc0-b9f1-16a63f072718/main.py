@@ -24,7 +24,7 @@ class TradingStrategy(Strategy):
          rsi_value = 50  # Default neutral RSI
 
       try:
-         macd_data = MACD("SPY", data, fast=12, slow=26)  # Calculate MACD (12, 26)
+        macd_values = MACD(self.ticker, data["ohlcv"], fast=12, slow=26)
          macd_line = macd_data.get("macd", [])
          signal_line = macd_data.get("signal", [])
          macd_signal_value = signal_line[-1] if signal_line else 0
