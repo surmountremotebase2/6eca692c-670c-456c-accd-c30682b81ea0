@@ -25,12 +25,13 @@ class TradingStrategy(Strategy):
 
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
+        d = json.loads(macd_result)
         log("Hello world")
-        log(macd_result)
+        log(d)
 
         if macd_result is not None:
             # Extract the MACD line, Signal line, and Histogram
-            macd_line = macd_result[0]
+            macd_line = macd_result[-1]
             signal_line = macd_result["signal"]
             histogram = macd_result["histogram"]
 
