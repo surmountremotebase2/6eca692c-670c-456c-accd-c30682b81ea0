@@ -21,7 +21,6 @@ class TradingStrategy(Strategy):
       try:
          rsi_value = RSI("SPY", data, 14)[-1]  # Calculate RSI (14-period)
       except:
-         log.warning("Error calculating RSI. Defaulting to 50.")
          rsi_value = 50  # Default neutral RSI
 
       try:
