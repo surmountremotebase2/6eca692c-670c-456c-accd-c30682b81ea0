@@ -1,8 +1,8 @@
 from surmount.base_class import Strategy, TargetAllocation
-from surmount.technical_indicators import MACD, RSI, ATR, EMA
+from surmount.technical_indicators import MACD, RSI
 from surmount.logging import log
 
-class ImprovedTradingStrategy(Strategy):
+class OptionsTradingStrategy(Strategy):
     @property
     def assets(self):
         return ["SPY"]
@@ -14,24 +14,27 @@ class ImprovedTradingStrategy(Strategy):
     def on_start(self):
         self.previous_macds = None
         self.previous_rsi = None
-        self.logger.info("Improved Trading Strategy Initialized.")
+        self.logger.info("Options Trading Strategy Initialized.")
 
     def run(self, data):
         """
-        Execute the trading strategy for SPY with enhanced logic.
+        Execute the trading strategy for SPY options based on MACDs and RSI.
 
         :param data: Market data provided by the Surmount trading environment.
-        :return: TargetAllocation with updated asset allocations.
+        :return: TargetAllocation with updated asset allocations or option orders.
         """
         holdings = data["holdings"]
-        allocation = holdings.get("SPY", 0)
+
+        # Get options chain data
+        option_chain = data.get("options", {}).get("SPY")
+        if not option_chain:
+            log("No options data available for SPY. Skipping.")
+            return None
 
         # Calculate indicators
         try:
             macd_result = MACD("SPY", data["ohlcv"], 12, 26)
             rsi_values = RSI("SPY", data, 14)
-            atr_value = ATR("SPY", data["ohlcv"], 14)[-1]
-            ema_value = EMA("SPY", data["ohlcv"], 50)[-1]
 
             rsi_value = rsi_values[-1] if rsi_values else 50  # Default to neutral RSI
         except Exception as e:
@@ -46,27 +49,30 @@ class ImprovedTradingStrategy(Strategy):
                 return None
 
             current_macds = signal_line[-1]
-            price = data["ohlcv"]["SPY"][-1]["close"]
 
             # Log the current indicator values
             log(f"MACDs Signal: {current_macds}")
             log(f"RSI Signal: {rsi_value}")
-            log(f"ATR: {atr_value}, EMA: {ema_value}, Price: {price}")
 
-            # Trend filter: Only buy if above the 50-period EMA
-            if price > ema_value:
-                # Enhanced allocation logic with dynamic thresholds
-                if current_macds < -0.5 * atr_value and rsi_value < 35:
-                    allocation = 1.0  # Full allocation
-                    log("Strong buy signal: MACDs < -0.5 * ATR and RSI < 35. Allocating 100% to SPY.")
-                elif current_macds > 0.6 * atr_value or rsi_value > 70:
-                    allocation = 0.2  # Partial allocation
-                    log("Partial allocation signal: MACDs > 0.6 * ATR or RSI > 70. Allocating 20% to SPY.")
-                else:
-                    log("No actionable signals. Maintaining current allocation.")
+            # Select at-the-money (ATM) options, closest expiration
+            atm_call = next((o for o in option_chain if o["strike"] >= data["ohlcv"]["SPY"][-1]["close"] and o["right"] == "C"), None)
+            atm_put = next((o for o in option_chain if o["strike"] <= data["ohlcv"]["SPY"][-1]["close"] and o["right"] == "P"), None)
+
+            if not atm_call or not atm_put:
+                log("No suitable ATM options found. Skipping.")
+                return None
+
+            # Buy logic: Strong bullish signal
+            if current_macds < -0.45 and rsi_value < 35:
+                log(f"Strong bullish signal: Buying 1 ATM Call {atm_call['symbol']}.")
+                return [{"action": "buy", "symbol": atm_call["symbol"], "quantity": 1}]
+
+            # Sell logic: Strong bearish signal
+            elif current_macds > 0.6 or rsi_value > 70:
+                log(f"Strong bearish signal: Buying 1 ATM Put {atm_put['symbol']}.")
+                return [{"action": "buy", "symbol": atm_put["symbol"], "quantity": 1}]
+
+            # No signal
             else:
-                log("Price below EMA. Reducing exposure.")
-                allocation = 0.2  # Conservative allocation when price is below EMA
-
-        # Return the target allocation
-        return TargetAllocation({"SPY": allocation})
+                log("No actionable signals. Holding current positions.")
+                return None
