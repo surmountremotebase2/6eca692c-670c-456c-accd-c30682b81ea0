@@ -3,76 +3,52 @@ from surmount.technical_indicators import MACD, RSI
 from surmount.logging import log
 
 class TradingStrategy(Strategy):
+    # Define the assets this strategy will trade
     @property
     def assets(self):
         return ["SPY"]
 
+    # Set the interval for the data. This strategy uses 5-minute intervals.
     @property
     def interval(self):
         return "5min"
 
-    def on_start(self):
-        self.previous_macds = None
-        self.previous_rsi = None
-        self.logger.info("Options Trading Strategy Initialized.")
-
     def run(self, data):
         """
-        Execute the trading strategy for SPY options based on MACDs and RSI.
+        Execute the trading strategy for SPY based on MACDs value.
 
-        :param data: Market data provided by the Surmount trading environment.
-        :return: TargetAllocation with updated asset allocations or option orders.
+        :param data: The market data provided by the Surmount trading environment.
+        :return: A TargetAllocation object defining the target allocations for the assets.
         """
+        # Initialize allocation to the current holdings or default to 0
         holdings = data["holdings"]
+        allocation = holdings.get("SPY", 0)
 
-        # Get options chain data
-        option_chain = data.get("options", {}).get("SPY")
-        if not option_chain:
-            log("No options data available for SPY. Skipping.")
-            return None
+        # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
+        macd_result = MACD("SPY", data["ohlcv"], 12, 26)
+        rsi_value = RSI("SPY", data, 14)[-1]
 
-        # Calculate indicators
-        try:
-            macd_result = MACD("SPY", data["ohlcv"], 12, 26)
-            rsi_values = RSI("SPY", data, 14)
-
-            rsi_value = rsi_values[-1] if rsi_values else 50  # Default to neutral RSI
-        except Exception as e:
-            log(f"Error calculating indicators: {e}")
-            return None
-
-        # Validate MACD result
         if macd_result:
+            # Extract the Signal line (MACDs) from the returned dictionary
             signal_line = macd_result.get("MACDs_12_26_9", [])
-            if len(signal_line) < 2:
-                log("Insufficient MACD data. Skipping allocation logic.")
-                return None
 
-            current_macds = signal_line[-1]
+            # Ensure sufficient data is available for processing
+            if len(signal_line) > 1:
+                current_macds = signal_line[-1]  # Get the most recent MACDs value
 
-            # Log the current indicator values
-            log(f"MACDs Signal: {current_macds}")
-            log(f"RSI Signal: {rsi_value}")
+                # Debug the current indicator value
+                log(f"MACDs Signal: {current_macds}")
+                log(f"RSI Signal: {rsi_value}")
 
-            # Select at-the-money (ATM) options, closest expiration
-            atm_call = next((o for o in option_chain if o["strike"] >= data["ohlcv"]["SPY"][-1]["close"] and o["right"] == "C"), None)
-            atm_put = next((o for o in option_chain if o["strike"] <= data["ohlcv"]["SPY"][-1]["close"] and o["right"] == "P"), None)
+                # Allocation logic based on MACDs value
+                if current_macds < -0.45 and rsi_value < 40:
+                    allocation = 1.0  # Full allocation to SPY
+                    log("MACDs < -0.45 and RSI < 40: Allocating 100% to SPY.")
+                elif current_macds > 0.6 or rsi_value > 60:
+                    allocation = 0.2  # Partial allocation to SPY
+                    log("MACDs > 0.6 or RSI > 60: Allocating 20% to SPY.")
+                else:
+                    log("No change in allocation.")
 
-            if not atm_call or not atm_put:
-                log("No suitable ATM options found. Skipping.")
-                return None
-
-            # Buy logic: Strong bullish signal
-            if current_macds < -0.45 and rsi_value < 35:
-                log(f"Strong bullish signal: Buying 1 ATM Call {atm_call['symbol']}.")
-                return [{"action": "buy", "symbol": atm_call["symbol"], "quantity": 1}]
-
-            # Sell logic: Strong bearish signal
-            elif current_macds > 0.6 or rsi_value > 70:
-                log(f"Strong bearish signal: Buying 1 ATM Put {atm_put['symbol']}.")
-                return [{"action": "buy", "symbol": atm_put["symbol"], "quantity": 1}]
-
-            # No signal
-            else:
-                log("No actionable signals. Holding current positions.")
-                return None
+        # Return the allocation advisory for SPY
+        return TargetAllocation({"SPY": allocation})
