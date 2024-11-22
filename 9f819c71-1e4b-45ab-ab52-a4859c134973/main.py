@@ -1,6 +1,6 @@
 import json
 from surmount.base_class import Strategy, TargetAllocation
-from surmount.technical_indicators import MACD
+from surmount.technical_indicators import MACD, RSI
 from surmount.logging import log
 
 class TradingStrategy(Strategy):
@@ -27,6 +27,7 @@ class TradingStrategy(Strategy):
 
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
+        rsi_value = RSI("SPY", data, 14)[-1]
 
         if macd_result:
             # Extract the Signal line (MACDs) from the returned dictionary
@@ -38,14 +39,15 @@ class TradingStrategy(Strategy):
 
                 # Debug the current indicator value
                 log(f"MACDs Signal: {current_macds}")
+                log(f"RSI Signal: {rsi_value}")
 
                 # Allocation logic based on MACDs value
-                if current_macds < -0.45:
+                if current_macds < -0.45 and rsi_value < 40:
                     allocation = 1.0  # Full allocation to SPY
-                    log("MACDs < -0.45: Allocating 100% to SPY.")
-                elif current_macds > 0.6:
+                    log("MACDs < -0.45 and RSI < 40: Allocating 100% to SPY.")
+                elif current_macds > 0.6 or rsi_value > 60:
                     allocation = 0.2  # Partial allocation to SPY
-                    log("MACDs > 0.6: Allocating 20% to SPY.")
+                    log("MACDs > 0.6 or RSI > 60: Allocating 20% to SPY.")
                 else:
                     log("No change in allocation.")
 
