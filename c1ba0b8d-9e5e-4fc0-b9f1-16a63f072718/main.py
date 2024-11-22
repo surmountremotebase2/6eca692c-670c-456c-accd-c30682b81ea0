@@ -17,13 +17,6 @@ class TradingStrategy(Strategy):
       holdings = data["holdings"]
       data = data["ohlcv"]
 
-      # Initialize indicators
-      try:
-         rsi_dict = RSI("SPY", data, 14)[-1]  # Calculate RSI (14-period)
-         rsi_value = sum(rsi_dict.values()) / rsi_dict.len()
-      except:
-         rsi_value = 50  # Default neutral RSI
-
       try:
          macd_data = MACD("SPY", data, fast=12, slow=26)  # Calculate MACD (12, 26)
          macd_signal_value = macd_data["MACD"][-1]
@@ -33,9 +26,9 @@ class TradingStrategy(Strategy):
 
       # Allocation logic
       allocation = {}
-      if rsi_value < 40 and macd_signal_value < -0.40:
+      if macd_signal_value < -0.40:
          allocation["SPY"] = 1.0
-      elif rsi_value > 70 and macd_signal_value > 0.60:
+      elif macd_signal_value > 0.60:
          allocation["SPY"] = 0.2
       else:
          allocation["SPY"] = holdings.get("SPY", 0)
