@@ -1,4 +1,3 @@
-import json
 from surmount.base_class import Strategy, TargetAllocation
 from surmount.technical_indicators import MACD, RSI
 from surmount.logging import log
