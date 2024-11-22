@@ -19,7 +19,8 @@ class TradingStrategy(Strategy):
 
       # Initialize indicators
       try:
-         rsi_value = RSI("SPY", data, 14)[-1]  # Calculate RSI (14-period)
+         rsi_dict = RSI("SPY", data, 14)[-1]  # Calculate RSI (14-period)
+         rsi_value = sum(rsi_dict.values()) / rsi_dict.len()
       except:
          rsi_value = 50  # Default neutral RSI
 
