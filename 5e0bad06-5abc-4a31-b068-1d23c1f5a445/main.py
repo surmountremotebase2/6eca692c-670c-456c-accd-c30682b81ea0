@@ -1,7 +1,7 @@
 from surmount.technical_indicators import MACD
 from surmount.base_class import Strategy
 
-class MACDTradingStrategy(Strategy):
+class TradingStrategy(Strategy):
     @property
     def assets(self):
         return ["SPY"]  # Trade only SPY
