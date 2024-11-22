@@ -33,9 +33,4 @@ class TradingStrategy(Strategy):
       else:
          allocation["SPY"] = holdings.get("SPY", 0)
 
-      # Check if allocation needs adjustment
-      for key in allocation:
-         if abs(allocation[key] - holdings.get(key, 0)) > 0.02:
-            return TargetAllocation(allocation)
-
       return None
