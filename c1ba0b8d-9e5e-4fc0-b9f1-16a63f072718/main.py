@@ -24,10 +24,8 @@ class TradingStrategy(Strategy):
          rsi_value = 50  # Default neutral RSI
 
       try:
-        macd_values = MACD(self.ticker, data["ohlcv"], fast=12, slow=26)
-         macd_line = macd_data.get("macd", [])
-         signal_line = macd_data.get("signal", [])
-         macd_signal_value = signal_line[-1] if signal_line else 0
+         macd_data = MACD("SPY", data, fast=12, slow=26)  # Calculate MACD (12, 26)
+         macd_signal_value = macd_data["MACD"][-1]
       except Exception as e:
          macd_signal_value = 0  # Default neutral MACD signal
 
