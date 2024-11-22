@@ -15,3 +15,13 @@ class TradingStrategy(Strategy):
     @property
     def data(self):
         return self.data_list
+
+
+   def run(self, data):
+    allocation_dict = {i: 1/len(self.tickers) for i in self.tickers}
+    ohlcv = data.get("ohlcv")
+    ratios = data.get(("ratios","AAPL"))
+    log(str(ohlcv))
+    log(str(ratios))
+    # WRITE STRATEGY LOGIC HERE
+    return TargetAllocation(allocation_dict)
