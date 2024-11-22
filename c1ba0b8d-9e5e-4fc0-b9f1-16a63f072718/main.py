@@ -1,41 +1,53 @@
-from surmount.base_class import Strategy, TargetAllocation
-from surmount.technical_indicators import RSI, MACD
+from surmount.base_class import Strategy, TargetAllocation, backtest
+from surmount.technical_indicators import MACD, RSI
 from surmount.logging import log
 
 class TradingStrategy(Strategy):
-    @property
-    def assets(self):
-        # Defines the asset this strategy is concerned with
-        return ["SPY"]
 
-    @property
-    def interval(self):
-        # The interval for data collection is set to 10 minutes
-        return "10min"
+   @property
+   def assets(self):
+      return ["SPY"]
 
-    def run(self, data):
-        # Get the latest MACD and RSI values for the SPY
-        macd_data = MACD("SPY", data["ohlcv"], 12, 26, 9)
-        rsi_data = RSI("SPY", data["ohlcv"], 14)
+   @property
+   def interval(self):
+      return "10min"
 
-        # Ensure there is enough data for both indicators
-        if macd_data is None or rsi_data is None or len(rsi_data) < 1:
-            return TargetAllocation({"SPY": 0})
+   def run(self, data):
+      # Extract holdings and OHLCV data
+      holdings = data["holdings"]
+      data = data["ohlcv"]["SPY"]
 
-        macd_signal = macd_data["signal"][-1]  # The latest MACD signal value
-        rsi_value = rsi_data[-1]                # The latest RSI value
+      # Initialize indicators
+      try:
+         rsi_value = RSI("SPY", data, 14)[-1]  # Calculate RSI (14-period)
+      except:
+         log.warning("Error calculating RSI. Defaulting to 50.")
+         rsi_value = 50  # Default neutral RSI
 
-        # Decision logic for full and partial allocation
-        if rsi_value < 40 or macd_signal < -0.40:
-            # Scenario for full allocation: RSI < 40 or MACD signal < -0.40
-            allocation = 1.0  # Full allocation
-        elif rsi_value > 70 or macd_signal > 0.60:
-            # Scenario for partial allocation: RSI > 70 or MACD signal > 0.60
-            allocation = 0.2  # Partial allocation
-        else:
-            # Default scenario: no strong momentum detected
-            allocation = 0.0  # No allocation
+      try:
+         macd_line, signal_line = MACD("SPY", data, 12, 26, 9)  # Calculate MACD (12, 26, 9)
+         macd_signal_value = signal_line[-1]
+      except:
+         log.warning("Error calculating MACD. Defaulting to 0.")
+         macd_signal_value = 0  # Default neutral MACD signal
 
-        log(f"Allocation for SPY: {allocation*100}%")
+      log.info(f"RSI: {rsi_value}, MACD Signal: {macd_signal_value}")
 
-        return TargetAllocation({"SPY": allocation})
+      # Allocation logic
+      allocation = {}
+      if rsi_value < 40 and macd_signal_value < -0.40:
+         log.info("RSI < 40 and MACD < -0.40: Allocating 100% to SPY.")
+         allocation["SPY"] = 1.0
+      elif rsi_value > 70 and macd_signal_value > 0.60:
+         log.info("RSI > 70 and MACD > 0.60: Allocating 20% to SPY.")
+         allocation["SPY"] = 0.2
+      else:
+         log.info("Conditions not met: Maintaining current allocation.")
+         allocation["SPY"] = holdings.get("SPY", 0)
+
+      # Check if allocation needs adjustment
+      for key in allocation:
+         if abs(allocation[key] - holdings.get(key, 0)) > 0.02:
+            return TargetAllocation(allocation)
+
+      return None
