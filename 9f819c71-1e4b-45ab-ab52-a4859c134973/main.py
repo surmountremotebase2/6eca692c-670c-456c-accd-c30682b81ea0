@@ -27,10 +27,7 @@ class TradingStrategy(Strategy):
 
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
-        rsi_value = RSI("SPY", data, 14)[-1]
-
-        d = json.dumps(macd_result)
-        log(d)
+        rsi_value = RSI("SPY", data, 14)
 
         r = json.dumps(rsi_value)
         log(r)
