@@ -10,7 +10,7 @@ class TradingStrategy(Strategy):
 
    @property
    def interval(self):
-      return "10m"
+      return "5min"
 
    def run(self, data):
       # Extract holdings and OHLCV data
