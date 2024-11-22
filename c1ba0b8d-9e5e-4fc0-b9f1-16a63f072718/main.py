@@ -25,7 +25,7 @@ class TradingStrategy(Strategy):
 
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
-        log("Hello world")
+        log("Hello world", macd_result)
 
         if macd_result is not None:
             # Extract the MACD line, Signal line, and Histogram
