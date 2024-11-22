@@ -18,10 +18,10 @@ class TradingStrategy(Strategy):
 
 
    def run(self, data):
-    allocation_dict = {i: 1/len(self.tickers) for i in self.tickers}
-    ohlcv = data.get("ohlcv")
-    ratios = data.get(("ratios","AAPL"))
-    log(str(ohlcv))
-    log(str(ratios))
-    # WRITE STRATEGY LOGIC HERE
-    return TargetAllocation(allocation_dict)
+      allocation_dict = {i: 1/len(self.tickers) for i in self.tickers}
+      ohlcv = data.get("ohlcv")
+      ratios = data.get(("ratios","AAPL"))
+      log(str(ohlcv))
+      log(str(ratios))
+      # WRITE STRATEGY LOGIC HERE
+      return TargetAllocation(allocation_dict)
