@@ -29,7 +29,6 @@ class TradingStrategy(Strategy):
          signal_line = macd_data.get("signal", [])
          macd_signal_value = signal_line[-1] if signal_line else 0
       except Exception as e:
-         log.warning(f"Error calculating MACD: {e}. Defaulting to 0.")
          macd_signal_value = 0  # Default neutral MACD signal
 
 
