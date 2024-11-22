@@ -12,7 +12,6 @@ class MACDTradingStrategy(Strategy):
 
     def on_start(self):
         # Initialize variables and indicators
-        self.macd = None
         self.previous_macd_signal = None
         self.logger.info("MACD Trading Strategy Initialized.")
 
@@ -27,20 +26,22 @@ class MACDTradingStrategy(Strategy):
             return None
 
         # Calculate MACD
-        macd_values = MACD("SPY", ohlcv, fast=12, slow=26, signal=9)
+        try:
+            macd_values = MACD("SPY", ohlcv, fast=12, slow=26, signal=9)
 
-        # Ensure MACD returns valid values
-        if isinstance(macd_values, tuple) and len(macd_values) == 2:
-            macd_line, signal_line = macd_values
-        else:
-            self.logger.warning("Invalid MACD data. Skipping.")
+            if isinstance(macd_values, tuple) and len(macd_values) == 2:
+                macd_line, signal_line = macd_values
+                macd_value = macd_line[-1]
+                signal_value = signal_line[-1]
+            else:
+                self.logger.warning("Invalid MACD data. Skipping.")
+                return None
+        except Exception as e:
+            self.logger.error(f"Error calculating MACD: {e}")
             return None
 
-        # Current MACD and Signal values
-        macd_value = macd_line[-1]
-        signal_value = signal_line[-1]
-
-        self.logger.info(f"MACD: {macd_value}, Signal: {signal_value}")
+        # Log current MACD values
+        self.logger.info(f"MACD Value: {macd_value}, Signal Value: {signal_value}")
 
         # Determine trade signals
         allocation = {}
@@ -59,4 +60,6 @@ class MACDTradingStrategy(Strategy):
         self.previous_macd_signal = signal_value
 
         # Return the target allocation
+        if allocation:
+            self.logger.info(f"Target Allocation: {allocation}")
         return allocation if allocation else None
