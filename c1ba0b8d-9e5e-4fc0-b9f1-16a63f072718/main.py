@@ -25,7 +25,7 @@ class TradingStrategy(Strategy):
          rsi_value = 50  # Default neutral RSI
 
       try:
-         macd_line, signal_line = MACD("SPY", data, 12, 26, 9)  # Calculate MACD (12, 26, 9)
+         macd_line, signal_line = MACD("SPY", data, 12, 26)  # Calculate MACD (12, 26, 9)
          macd_signal_value = signal_line[-1]
       except:
          log.warning("Error calculating MACD. Defaulting to 0.")
