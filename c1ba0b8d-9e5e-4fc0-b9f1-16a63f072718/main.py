@@ -15,7 +15,7 @@ class TradingStrategy(Strategy):
    def run(self, data):
       # Extract holdings and OHLCV data
       holdings = data["holdings"]
-      data = data["ohlcv"]["SPY"]
+      data = data["ohlcv"]
 
       # Initialize indicators
       try:
