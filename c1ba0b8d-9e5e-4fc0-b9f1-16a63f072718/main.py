@@ -28,7 +28,7 @@ class TradingStrategy(Strategy):
 
         if macd_result is not None:
             # Extract the MACD line, Signal line, and Histogram
-            macd_line = macd_result["MACD"]
+            macd_line = macd_result["macd"]
             signal_line = macd_result["signal"]
             histogram = macd_result["histogram"]
 
