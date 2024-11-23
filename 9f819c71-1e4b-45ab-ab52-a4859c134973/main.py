@@ -59,4 +59,4 @@ class TradingStrategy(Strategy):
            
 
         # Return the allocation advisory for SPY
-        return TargetAllocation({"SPY": allocation})
+        return TargetAllocation(allocation)
