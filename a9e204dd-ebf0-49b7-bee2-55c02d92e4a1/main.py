@@ -18,6 +18,7 @@ class MACDCrossoverStrategy(Strategy):
         :param data: Market data provided by the Surmount trading environment.
         :return: TargetAllocation with updated asset allocations.
         """
+        # Ensure allocation is always a dictionary
         holdings = data["holdings"]
         allocation = {"SPY": holdings.get("SPY", 0), "SQQQ": holdings.get("SQQQ", 0)}
 
