@@ -47,6 +47,7 @@ class TradingStrategy(Strategy):
             
             if rsi_slope < -3:
                 allocation = 1.0
+                sq_allocation = 0.0
             elif macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1]:
                 log("Bullish crossover detected: MACD Line has crossed above Signal Line. rut")
                 allocation = 1.0  # Allocate 100% to SPY
