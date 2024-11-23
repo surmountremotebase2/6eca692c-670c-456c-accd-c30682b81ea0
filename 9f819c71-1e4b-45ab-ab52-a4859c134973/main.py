@@ -6,7 +6,7 @@ class TradingStrategy(Strategy):
     # Define the assets this strategy will trade
     @property
     def assets(self):
-        return ["SPY"]
+        return ["SPY", "SQQQ"]
 
     # Set the interval for the data. This strategy uses 5-minute intervals.
     @property
@@ -23,6 +23,7 @@ class TradingStrategy(Strategy):
         # Initialize allocation to the current holdings or default to 0
         holdings = data["holdings"]
         allocation = holdings.get("SPY", 0)
+        
 
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
