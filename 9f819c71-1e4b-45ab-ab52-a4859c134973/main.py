@@ -53,7 +53,7 @@ class TradingStrategy(Strategy):
                 
             # Check for bearish convergence
             if current_diff > 0 and previous_diff > current_diff:
-                log("Bearish convergence detected: MACD is moving closer to Signal Line. rut -0.4")
+                log("Bearish convergence detected: MACD is moving closer to Signal Line. rut SQQQ")
                 allocation["SQQQ"] = 0.5  # Set SQQQ allocation to 50%
                 allocation["SPY"] = 0.0  # Exit SPY
            
