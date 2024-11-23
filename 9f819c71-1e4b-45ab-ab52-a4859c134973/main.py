@@ -29,8 +29,17 @@ class TradingStrategy(Strategy):
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
         rsi_value = RSI("SPY", data, 14)
 
-        r = json.dumps(data)
+
+        p = json.dumps(data)
+        log(p)
+
+        m = json.dumps(macd_result)
+        log(m)
+
+        r = json.dumps(rsi_value)
         log(r)
+
+        
 
 
         if macd_result:
