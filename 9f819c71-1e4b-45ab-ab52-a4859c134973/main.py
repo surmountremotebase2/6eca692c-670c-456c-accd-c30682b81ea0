@@ -12,7 +12,7 @@ class TradingStrategy(Strategy):
     # Set the interval for the data. This strategy uses 5-minute intervals.
     @property
     def interval(self):
-        return "5min"
+        return "1min"
 
     def run(self, data):
         """
