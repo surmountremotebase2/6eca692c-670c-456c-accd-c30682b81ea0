@@ -48,13 +48,13 @@ class TradingStrategy(Strategy):
             if rsi_slope < -3:
                 allocation = 1.0
             elif macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1]:
-                log("Bullish crossover detected: MACD Line has crossed above Signal Line.")
+                log("Bullish crossover detected: MACD Line has crossed above Signal Line. rut")
                 allocation = 1.0  # Allocate 100% to SPY
                 sq_allocation = 0.0
                 
             # Check for bearish convergence
             if current_diff > 0 and previous_diff > current_diff:
-                log("Bearish convergence detected: MACD is moving closer to Signal Line.")
+                log("Bearish convergence detected: MACD is moving closer to Signal Line. short")
                 allocation = 0.0  # Reduce exposure to SPY
                 sq_allocation = 0.5
            
