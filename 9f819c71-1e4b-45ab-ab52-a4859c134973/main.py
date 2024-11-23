@@ -27,7 +27,7 @@ class TradingStrategy(Strategy):
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
         rsi_result = RSI("SPY", data, 14)
-        
+
         if macd_result:
             # Extract the Signal line (MACDs) from the returned dictionary
             signal_line = macd_result.get("MACDs_12_26_9", [])
@@ -47,7 +47,7 @@ class TradingStrategy(Strategy):
             if rsi_slope < -3:
                 allocation = 1.0
             elif macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1]:
-                log("Bullish crossover detected: MACD Line has crossed above Signal Line.")
+                log("Bullish crossover detected: MACD Line has crossed above Signal Line. rut")
                 allocation = 1.0  # Allocate 100% to SPY
                 
             # Check for bearish convergence
