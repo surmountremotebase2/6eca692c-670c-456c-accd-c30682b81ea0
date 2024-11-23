@@ -22,7 +22,7 @@ class TradingStrategy(Strategy):
         """
         # Initialize allocation to the current holdings or default to 0
         holdings = data["holdings"]
-        allocation = holdings.get("SPY", 0)
+        allocation = {"SPY": holdings.get("SPY", 0), "SQQQ": holdings.get("SQQQ", 0)}
         
 
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
