@@ -53,7 +53,7 @@ class TradingStrategy(Strategy):
             # Check for bearish convergence
             if current_diff > 0 and previous_diff > current_diff:
                 log("Bearish convergence detected: MACD is moving closer to Signal Line.")
-                allocation = 0.2  # Reduce exposure to SPY
+                allocation = -0.4  # Reduce exposure to SPY
            
 
         # Return the allocation advisory for SPY
