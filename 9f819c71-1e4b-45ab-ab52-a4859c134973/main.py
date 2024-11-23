@@ -28,6 +28,8 @@ class TradingStrategy(Strategy):
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
         rsi_result = RSI("SPY", data, 14)
 
+        log('rut')
+
         if macd_result:
             # Extract the Signal line (MACDs) from the returned dictionary
             signal_line = macd_result.get("MACDs_12_26_9", [])
