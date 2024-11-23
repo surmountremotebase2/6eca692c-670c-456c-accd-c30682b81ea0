@@ -30,6 +30,8 @@ class TradingStrategy(Strategy):
         rsi_value = RSI("SPY", data, 14)
 
 
+        log("start")
+
         p = json.dumps(data)
         log(p)
 
@@ -38,6 +40,8 @@ class TradingStrategy(Strategy):
 
         r = json.dumps(rsi_value)
         log(r)
+
+        log("end")
 
         
 
