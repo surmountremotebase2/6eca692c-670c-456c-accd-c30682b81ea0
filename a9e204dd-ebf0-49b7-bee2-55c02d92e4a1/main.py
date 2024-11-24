@@ -1,5 +1,5 @@
 from surmount.base_class import Strategy, TargetAllocation
-from surmount.technical_indicators import MACD, RSI, ATR
+from surmount.technical_indicators import MACD, RSI, EMA
 from surmount.logging import log
 
 class TradingStrategy(Strategy):
@@ -12,13 +12,11 @@ class TradingStrategy(Strategy):
         return "5min"
 
     def on_start(self):
-        self.entry_price = None
-        self.trailing_stop = None
-        self.profit_target = None
+        self.current_signal = None  # Track the last signal (bullish/bearish/neutral)
 
     def run(self, data):
         """
-        Execute the trading strategy for SPY with dynamic stop-loss and profit target.
+        Execute the trading strategy for SPY with refined logic.
 
         :param data: Market data provided by the Surmount trading environment.
         :return: TargetAllocation with updated asset allocations.
@@ -29,52 +27,31 @@ class TradingStrategy(Strategy):
         # Compute indicators
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
         rsi_result = RSI("SPY", data, 14)
-        atr = ATR("SPY", data["ohlcv"], 14)[-1] if ATR("SPY", data["ohlcv"], 14) else None
+        ema_50 = EMA("SPY", data["ohlcv"], 50)[-1] if EMA("SPY", data["ohlcv"], 50) else None
         current_price = data["ohlcv"][-1]["SPY"]["close"]
 
-        if macd_result and rsi_result and atr:
+        if macd_result and rsi_result and ema_50:
             # Extract MACD and Signal Line
             signal_line = macd_result.get("MACDs_12_26_9", [])
             macd_line = macd_result.get("MACD_12_26_9", [])
             rsi_value = rsi_result[-1]
 
-            # Check for bullish crossover
-            if macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1] and rsi_value < 70:
-                if self.entry_price is None:  # Enter trade
-                    log("Bullish crossover detected: Entering SPY.")
+            # Check for bullish conditions
+            if macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1] and rsi_value < 70 and current_price > ema_50:
+                if self.current_signal != "bullish":
+                    log("Bullish signal detected: Allocating 100% to SPY.")
                     allocation = 1.0
-                    self.entry_price = current_price
-                    self.trailing_stop = current_price - 2 * atr
-                    self.profit_target = current_price + 2 * atr
-                else:
-                    log("Already in a trade, maintaining allocation.")
+                    self.current_signal = "bullish"
 
-            # Check for bearish convergence
-            elif macd_line[-2] > signal_line[-2] and macd_line[-1] < signal_line[-1]:
-                log("Bearish signal detected: Exiting SPY.")
-                allocation = 0.0
-                self.entry_price = None
-                self.trailing_stop = None
-                self.profit_target = None
-
-            # Manage open positions
-            elif self.entry_price:
-                # Update trailing stop
-                self.trailing_stop = max(self.trailing_stop, current_price - 2 * atr)
-                log(f"Trailing Stop Updated: {self.trailing_stop}")
-
-                # Exit if trailing stop or profit target hit
-                if current_price <= self.trailing_stop:
-                    log("Trailing stop hit: Exiting SPY.")
+            # Check for bearish conditions
+            elif macd_line[-2] > signal_line[-2] and macd_line[-1] < signal_line[-1] and rsi_value > 30 and current_price < ema_50:
+                if self.current_signal != "bearish":
+                    log("Bearish signal detected: Reducing allocation to SPY.")
                     allocation = 0.0
-                    self.entry_price = None
-                    self.trailing_stop = None
-                    self.profit_target = None
-                elif current_price >= self.profit_target:
-                    log("Profit target reached: Exiting SPY.")
-                    allocation = 0.0
-                    self.entry_price = None
-                    self.trailing_stop = None
-                    self.profit_target = None
+                    self.current_signal = "bearish"
+
+            # Maintain allocation if no strong signal change
+            else:
+                log("No strong signal detected: Maintaining current allocation.")
 
         return TargetAllocation({"SPY": allocation})
