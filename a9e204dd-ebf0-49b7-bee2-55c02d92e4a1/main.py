@@ -2,25 +2,27 @@ from surmount.base_class import Strategy, TargetAllocation
 from surmount.technical_indicators import MACD, RSI, EMA
 from surmount.logging import log
 
-class TradingStrategy(Strategy):
-    # Define the assets this strategy will trade
+class LongHoldingTradingStrategy(Strategy):
     @property
     def assets(self):
         return ["SPY"]
 
-    # Set the interval for the data. This strategy uses 5-minute intervals.
     @property
     def interval(self):
         return "5min"
 
+    def on_start(self):
+        # Track holding periods and last allocation
+        self.holding_period = 0
+        self.last_allocation = 0.0
+
     def run(self, data):
         """
-        Execute the trading strategy for SPY based on MACD, RSI, and EMA.
+        Execute the trading strategy for SPY with a holding period.
 
-        :param data: The market data provided by the Surmount trading environment.
-        :return: A TargetAllocation object defining the target allocations for the assets.
+        :param data: Market data provided by the Surmount trading environment.
+        :return: TargetAllocation with updated asset allocations.
         """
-        # Initialize allocation to the current holdings or default to 0
         holdings = data["holdings"]
         allocation = holdings.get("SPY", 0)
 
@@ -43,26 +45,27 @@ class TradingStrategy(Strategy):
             current_diff = macd_line[-1] - signal_line[-1]
             previous_diff = macd_line[-2] - signal_line[-2]
 
-            # Trend filter: only buy if price > EMA(50)
-            if current_price > ema_50:
+            # Track holding period
+            self.holding_period += 1
+
+            # Trade logic with holding period
+            if self.holding_period >= 5:  # Minimum holding period
                 # Bullish crossover: MACD crosses above Signal
                 if macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1]:
                     log("Bullish crossover detected: Allocating to SPY.")
-                    allocation = min(1.0, allocation + 0.2)  # Gradual increase in allocation
+                    allocation = 1.0  # Allocate 100% to SPY
+                    self.holding_period = 0  # Reset holding period
+
+                # Bearish convergence: MACD moves closer to Signal
+                elif current_diff > 0 and previous_diff > current_diff:
+                    log("Bearish convergence detected: Reducing SPY allocation.")
+                    allocation = 0.0  # Exit SPY
+                    self.holding_period = 0  # Reset holding period
+
+            # If no strong signal, maintain the current allocation
             else:
-                log("Price below EMA(50): Avoiding bullish trades.")
+                log(f"Holding current allocation for {self.holding_period} intervals.")
 
-            # Bearish convergence: MACD moves closer to Signal
-            if current_diff > 0 and previous_diff > current_diff:
-                log("Bearish convergence detected: Reducing SPY allocation.")
-                allocation = max(0.0, allocation - 0.2)  # Gradual reduction in allocation
-
-            # Incorporate RSI slope
-            if rsi_slope < -5:
-                log("RSI indicates strong bearish momentum: Reducing allocation to SPY.")
-                allocation = 0.0
-            elif rsi_slope > 5:
-                log("RSI indicates strong bullish momentum: Increasing allocation to SPY.")
-                allocation = 1.0
-
+        # Update the last allocation for debugging and return the target allocation
+        self.last_allocation = allocation
         return TargetAllocation({"SPY": allocation})
