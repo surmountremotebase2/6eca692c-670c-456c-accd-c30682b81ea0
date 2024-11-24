@@ -31,7 +31,7 @@ class TradingStrategy(Strategy):
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
         rsi_result = RSI("SPY", data, 14)
         ema_50 = EMA("SPY", data["ohlcv"], 50)[-1] if EMA("SPY", data["ohlcv"], 50) else None
-        current_price = data["ohlcv"]["SPY"][-1]["close"]
+        current_price = data["ohlcv"][-1]["SPY"]["close"]
 
         if macd_result and rsi_result and ema_50:
             # Extract MACD and Signal Line
