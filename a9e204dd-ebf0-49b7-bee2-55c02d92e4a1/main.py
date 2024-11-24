@@ -2,7 +2,7 @@ from surmount.base_class import Strategy, TargetAllocation
 from surmount.technical_indicators import MACD, RSI, EMA
 from surmount.logging import log
 
-class ImprovedTradingStrategy(Strategy):
+class TradingStrategy(Strategy):
     # Define the assets this strategy will trade
     @property
     def assets(self):
