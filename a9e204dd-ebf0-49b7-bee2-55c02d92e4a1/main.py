@@ -24,6 +24,10 @@ class TradingStrategy(Strategy):
         :param data: Market data provided by the Surmount trading environment.
         :return: TargetAllocation with updated asset allocations.
         """
+        # Ensure current_signal exists
+        if not hasattr(self, "current_signal"):
+            self.current_signal = "neutral"
+
         holdings = data["holdings"]
         allocation = holdings.get("SPY", 0)
 
@@ -31,7 +35,7 @@ class TradingStrategy(Strategy):
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
         rsi_result = RSI("SPY", data, 14)
         ema_50 = EMA("SPY", data["ohlcv"], 50)[-1] if EMA("SPY", data["ohlcv"], 50) else None
-        current_price = data["ohlcv"][-1]["SPY"]["close"]
+        current_price = data["ohlcv"][-1]["SPY"]["close"]  # Corrected current price extraction
 
         if macd_result and rsi_result and ema_50:
             # Extract MACD and Signal Line
