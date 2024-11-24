@@ -29,7 +29,7 @@ class TradingStrategy(Strategy):
             self.current_signal = "neutral"
 
         holdings = data["holdings"]
-        allocation = holdings.get("SPY", 0)
+        allocation = holdings.get("SPY", 0.5)
 
         # Compute indicators
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
@@ -54,7 +54,7 @@ class TradingStrategy(Strategy):
             elif macd_line[-2] > signal_line[-2] and macd_line[-1] < signal_line[-1] and rsi_value > 30 and current_price < ema_50:
                 if self.current_signal != "bearish":
                     log("Bearish signal detected: Reducing allocation to SPY.")
-                    allocation = 0.0
+                    allocation = 0.2
                     self.current_signal = "bearish"
 
             # Maintain allocation if no strong signal change
