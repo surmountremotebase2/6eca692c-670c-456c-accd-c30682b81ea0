@@ -6,7 +6,7 @@ class TradingStrategy(Strategy):
     # Define the assets this strategy will trade
     @property
     def assets(self):
-        return ["SPY", "SQQQ"]
+        return ["SPY"]
 
     # Set the interval for the data. This strategy uses 5-minute intervals.
     @property
@@ -23,7 +23,6 @@ class TradingStrategy(Strategy):
         # Initialize allocation to the current holdings or default to 0
         holdings = data["holdings"]
         allocation = holdings.get("SPY", 0)
-        sq_allocation = holdings.get("SQQQ", 0)
 
         # Compute the MACD for SPY. Here we're using a standard fast=12, slow=26 period configuration.
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
@@ -48,13 +47,11 @@ class TradingStrategy(Strategy):
             if macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1]:
                 log("Bullish crossover detected: MACD Line has crossed above Signal Line.")
                 allocation = 1.0  # Allocate 100% to SPY
-                sq_allocation = 0.0
                 
             # Check for bearish convergence
             if current_diff > 0 and previous_diff > current_diff:
                 log("Bearish convergence detected: MACD is moving closer to Signal Line.")
                 allocation = 0.0  # Reduce exposure to SPY
-                sq_allocation = 0.5
            
 
-        return TargetAllocation({"SPY": allocation, "SQQQ": sq_allocation})
+        return TargetAllocation({"SPY": allocation})
