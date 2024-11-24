@@ -60,5 +60,6 @@ class TradingStrategy(Strategy):
             # Maintain allocation if no strong signal change
             else:
                 log("No strong signal detected: Maintaining current allocation.")
+                allocation = 0.5
 
         return TargetAllocation({"SPY": allocation})
