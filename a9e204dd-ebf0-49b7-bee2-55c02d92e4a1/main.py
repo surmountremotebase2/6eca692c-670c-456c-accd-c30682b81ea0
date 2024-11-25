@@ -16,7 +16,7 @@ class TradingStrategy(Strategy):
         Initialize the strategy.
         """
         self.current_signal = "neutral"  # Track the current signal
-        self.holding_period = 0  # Initialize the holding period counter
+        self.holding_period = 50  # Initialize the holding period counter
 
     def run(self, data):
         """
@@ -27,12 +27,12 @@ class TradingStrategy(Strategy):
         """
         # Ensure holding_period and current_signal exist
         if not hasattr(self, "holding_period"):
-            self.holding_period = 0
+            self.holding_period = 50
         if not hasattr(self, "current_signal"):
             self.current_signal = "neutral"
 
         holdings = data["holdings"]
-        allocation = holdings.get("SPY", 0)
+        allocation = holdings.get("SPY", 50)
 
         # Compute indicators
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
@@ -72,7 +72,7 @@ class TradingStrategy(Strategy):
             ):
                 if self.current_signal != "bullish" or self.holding_period >= 10:
                     log("Strong bullish signal detected: Allocating 100% to SPY.")
-                    allocation = min(1.0, allocation + 0.3)  # Gradual increase
+                    allocation = min(1.0, allocation + 0.2)  # Gradual increase
                     self.current_signal = "bullish"
                     self.holding_period = 0
 
@@ -85,7 +85,7 @@ class TradingStrategy(Strategy):
             ):
                 if self.current_signal != "bearish" or self.holding_period >= 10:
                     log("Strong bearish signal detected: Reducing allocation to SPY.")
-                    allocation = max(0.0, allocation - 0.3)  # Gradual decrease
+                    allocation = max(0.0, allocation - 0.1)  # Gradual decrease
                     self.current_signal = "bearish"
                     self.holding_period = 0
 
