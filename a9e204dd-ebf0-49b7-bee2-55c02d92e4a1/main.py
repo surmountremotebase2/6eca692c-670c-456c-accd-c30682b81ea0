@@ -32,7 +32,8 @@ class TradingStrategy(Strategy):
             self.current_signal = "neutral"
 
         holdings = data["holdings"]
-        allocation = holdings.get("SPY", 50)
+        allocation = holdings.get("SPY", .50)
+        sq_allocation = 0
 
         # Compute indicators
         macd_result = MACD("SPY", data["ohlcv"], 12, 26)
@@ -72,7 +73,8 @@ class TradingStrategy(Strategy):
             ):
                 if self.current_signal != "bullish" or self.holding_period >= 10:
                     log("Strong bullish signal detected: Allocating 100% to SPY.")
-                    allocation = min(1.0, allocation + 0.2)  # Gradual increase
+                    allocation = min(1.0, allocation + 0.3)  # Gradual increase
+                    sq_allocation = 0
                     self.current_signal = "bullish"
                     self.holding_period = 0
 
@@ -85,7 +87,8 @@ class TradingStrategy(Strategy):
             ):
                 if self.current_signal != "bearish" or self.holding_period >= 10:
                     log("Strong bearish signal detected: Reducing allocation to SPY.")
-                    allocation = max(0.0, allocation - 0.1)  # Gradual decrease
+                    allocation = max(0.0, allocation - 0.2)  # Gradual decrease
+                    sq_allocation = 0.3
                     self.current_signal = "bearish"
                     self.holding_period = 0
 
@@ -93,4 +96,4 @@ class TradingStrategy(Strategy):
             else:
                 log(f"No strong signal detected. Maintaining allocation: {allocation}. Holding period: {self.holding_period}")
 
-        return TargetAllocation({"SPY": allocation})
+        return TargetAllocation({"SPY": allocation, "SQQQ": sq_allocation})
