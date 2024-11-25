@@ -44,26 +44,36 @@ class TradingStrategy(Strategy):
             macd_line = macd_result.get("MACD_12_26_9", [])
             rsi_value = rsi_result[-1]
 
+            # Debugging indicator values
+            log(f"Current Price: {current_price}, EMA(50): {ema_50}, RSI: {rsi_value}")
+            log(f"MACD: {macd_line[-1]}, Signal Line: {signal_line[-1]}")
+
             # Increment holding period counter
             self.holding_period += 1
 
+            # Looser conditions for bullish and bearish signals
+            bullish_condition = (
+                macd_line[-1] > signal_line[-1]  # MACD above Signal
+                and rsi_value < 60               # RSI below overbought
+                and current_price > ema_50       # Price above EMA(50)
+            )
+            bearish_condition = (
+                macd_line[-1] < signal_line[-1]  # MACD below Signal
+                and rsi_value > 40               # RSI above oversold
+                and current_price < ema_50       # Price below EMA(50)
+            )
+
             # Check for bullish conditions
-            if (
-                macd_line[-2] < signal_line[-2] and macd_line[-1] > signal_line[-1]
-                and rsi_value < 50 and current_price > ema_50
-            ):
-                if self.current_signal != "bullish" or self.holding_period >= 10:  # Prevent frequent trades
+            if bullish_condition:
+                if self.current_signal != "bullish" or self.holding_period >= 10:
                     log("Bullish signal detected: Allocating 100% to SPY.")
                     allocation = 1.0
                     self.current_signal = "bullish"
                     self.holding_period = 0  # Reset holding period
 
             # Check for bearish conditions
-            elif (
-                macd_line[-2] > signal_line[-2] and macd_line[-1] < signal_line[-1]
-                and rsi_value > 70 and current_price < ema_50
-            ):
-                if self.current_signal != "bearish" or self.holding_period >= 10:  # Prevent frequent trades
+            elif bearish_condition:
+                if self.current_signal != "bearish" or self.holding_period >= 10:
                     log("Bearish signal detected: Exiting SPY.")
                     allocation = 0.0
                     self.current_signal = "bearish"
