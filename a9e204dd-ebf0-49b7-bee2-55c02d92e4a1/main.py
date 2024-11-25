@@ -2,7 +2,7 @@ from surmount.base_class import Strategy, TargetAllocation
 from surmount.technical_indicators import MACD, RSI, EMA
 from surmount.logging import log
 
-class TradingStrategy(Strategy):
+class SimplifiedTradingStrategy(Strategy):
     @property
     def assets(self):
         return ["SPY"]
@@ -16,7 +16,7 @@ class TradingStrategy(Strategy):
         Initialize the strategy. This method is called once when the strategy starts.
         """
         self.current_signal = "neutral"  # Track the current signal
-        self.holding_period = 0  # Count how long a position is held
+        self.holding_period = 0  # Initialize the holding period counter
 
     def run(self, data):
         """
@@ -25,6 +25,10 @@ class TradingStrategy(Strategy):
         :param data: Market data provided by the Surmount trading environment.
         :return: TargetAllocation with updated asset allocations.
         """
+        # Ensure holding_period exists
+        if not hasattr(self, "holding_period"):
+            self.holding_period = 0
+
         holdings = data["holdings"]
         allocation = holdings.get("SPY", 0)
 
@@ -52,7 +56,7 @@ class TradingStrategy(Strategy):
                     log("Bullish signal detected: Allocating 100% to SPY.")
                     allocation = 1.0
                     self.current_signal = "bullish"
-                    self.holding_period = 0
+                    self.holding_period = 0  # Reset holding period
 
             # Check for bearish conditions
             elif (
@@ -63,7 +67,7 @@ class TradingStrategy(Strategy):
                     log("Bearish signal detected: Exiting SPY.")
                     allocation = 0.0
                     self.current_signal = "bearish"
-                    self.holding_period = 0
+                    self.holding_period = 0  # Reset holding period
 
             # No actionable signal
             else:
