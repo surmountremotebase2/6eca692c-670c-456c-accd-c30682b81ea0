@@ -54,7 +54,7 @@ class TradingStrategy(Strategy):
 
             # Debugging indicator values
             log(f"Price: {current_price}, EMA(50): {ema_50}, EMA(200): {ema_200}")
-            log(f"MACD: {macd_line[-1]}, Signal: {signal_line[-1]}, RSI: {rsi_value}")
+            log(f"R_MACD: {macd_line[-1]}, Signal: {signal_line[-1]}, RSI: {rsi_value}")
             log(f"Bollinger Upper: {upper_band}, Lower: {lower_band}, ATR: {atr}")
 
             # Trend confirmation
