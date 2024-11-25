@@ -1,8 +1,8 @@
 from surmount.base_class import Strategy, TargetAllocation
-from surmount.technical_indicators import MACD, RSI, BollingerBands, EMA, ATR
+from surmount.technical_indicators import MACD, RSI, BB, EMA, ATR
 from surmount.logging import log
 
-class radingStrategy(Strategy):
+class TradingStrategy(Strategy):
     @property
     def assets(self):
         return ["SPY"]
@@ -39,7 +39,7 @@ class radingStrategy(Strategy):
         rsi_result = RSI("SPY", data, 14)
         ema_50 = EMA("SPY", data["ohlcv"], 50)[-1] if EMA("SPY", data["ohlcv"], 50) else None
         ema_200 = EMA("SPY", data["ohlcv"], 200)[-1] if EMA("SPY", data["ohlcv"], 200) else None
-        bollinger_bands = BollingerBands("SPY", data["ohlcv"], 20, 2)
+        bollinger_bands = BB("SPY", data["ohlcv"], 20, 2)
         atr = ATR("SPY", data["ohlcv"], 14)[-1] if ATR("SPY", data["ohlcv"], 14) else None
         current_price = data["ohlcv"][-1]["SPY"]["close"]  # Extract current price
 
