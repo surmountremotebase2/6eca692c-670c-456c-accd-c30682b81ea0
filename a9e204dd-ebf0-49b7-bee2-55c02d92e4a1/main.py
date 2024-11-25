@@ -25,7 +25,9 @@ class TradingStrategy(Strategy):
         :param data: Market data provided by the Surmount trading environment.
         :return: TargetAllocation with updated asset allocations.
         """
-        # Ensure holding_period exists
+        # Ensure attributes are initialized
+        if not hasattr(self, "current_signal"):
+            self.current_signal = "neutral"
         if not hasattr(self, "holding_period"):
             self.holding_period = 0
 
